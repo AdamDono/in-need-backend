@@ -1,0 +1,15 @@
+Python
+
+pycache/ *.pyc *.pyo *.pyd .Python env/ venv/ ENV/
+
+Instance config
+
+instance/
+
+IDEs
+
+.vscode/ .idea/
+
+Misc
+
+*.log *.DS_Store
