@@ -33,7 +33,13 @@ def register():
         if User.query.filter_by(email=form.email.data).first():
             flash('Email already registered.', 'danger')
             return redirect(url_for('main.register'))
-        user = User(username=form.username.data, email=form.email.data, password_hash=generate_password_hash(form.password.data, method='sha256'), role=form.role.data, name=form.username.data)
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            password_hash=generate_password_hash(form.password.data, method='pbkdf2:sha256'),
+            role=form.role.data,
+            name=form.username.data
+        )
         db.session.add(user)
         db.session.commit()
         flash('Registration successful! Please log in.', 'success')
