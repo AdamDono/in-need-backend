@@ -1,7 +1,69 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for, flash
+from flask_login import login_user, logout_user, login_required, current_user
+from .models import User
+from . import db
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SelectField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo
 
 main = Blueprint('main', __name__)
+
+class RegistrationForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    role = SelectField('Role', choices=[('sponsor', 'Sponsor'), ('organization', 'Organization'), ('individual', 'Individual')], validators=[DataRequired()])
+    submit = SubmitField('Sign Up')
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Sign In')
 
 @main.route('/')
 def index():
     return render_template('index.html')
+
+@main.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        if User.query.filter_by(email=form.email.data).first():
+            flash('Email already registered.', 'danger')
+            return redirect(url_for('main.register'))
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            password_hash=generate_password_hash(form.password.data, method='pbkdf2:sha256'),
+            role=form.role.data,
+            name=form.username.data
+        )
+        db.session.add(user)
+        db.session.commit()
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('main.login'))
+    return render_template('register.html', form=form)
+
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and check_password_hash(user.password_hash, form.password.data):
+            login_user(user)
+            return redirect(url_for('main.discovery'))
+        flash('Invalid email or password.', 'danger')
+    return render_template('login.html', form=form)
+
+@main.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('main.index'))
+
+@main.route('/discovery')
+@login_required
+def discovery():
+    return render_template('discovery.html')
