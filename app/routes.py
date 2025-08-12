@@ -33,13 +33,7 @@ def register():
         if User.query.filter_by(email=form.email.data).first():
             flash('Email already registered.', 'danger')
             return redirect(url_for('main.register'))
-        user = User(
-            username=form.username.data,
-            email=form.email.data,
-            password_hash=generate_password_hash(form.password.data, method='pbkdf2:sha256'),
-            role=form.role.data,
-            name=form.username.data
-        )
+        user = User(username=form.username.data, email=form.email.data, password_hash=generate_password_hash(form.password.data, method='pbkdf2:sha256'), role=form.role.data, name=form.username.data, verification_status='approved')
         db.session.add(user)
         db.session.commit()
         flash('Registration successful! Please log in.', 'success')
@@ -66,4 +60,11 @@ def logout():
 @main.route('/discovery')
 @login_required
 def discovery():
-    return render_template('discovery.html')
+    print(f"Current user role: {current_user.role}")  # Debug print to console
+    return render_template('discovery.html', current_user=current_user)
+
+@main.route('/post')
+@login_required
+def post():
+    # Stub for now, will implement later
+    return render_template('post.html', current_user=current_user)
