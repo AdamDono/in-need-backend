@@ -1,11 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
-from .models import User
+from .models import User, Post
 from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, SubmitField
+from wtforms import StringField, PasswordField, SelectField, SubmitField, TextAreaField, IntegerField, FileField
 from wtforms.validators import DataRequired, Email, EqualTo
+import os
 
 main = Blueprint('main', __name__)
 
@@ -14,13 +15,21 @@ class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('sponsor', 'Sponsor'), ('organization', 'Organization'), ('individual', 'Individual')], validators=[DataRequired()])
+    role = SelectField('Role', choices=[('sponsor', 'Sponsor'), ('organization', 'Organization'), ('individual', 'Individual'), ('admin', 'Admin')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Sign In')
+
+class PostForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    description = TextAreaField('Description', validators=[DataRequired()])
+    image = FileField('Image Upload')
+    priority = SelectField('Priority', choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')], validators=[DataRequired()])
+    days_left = IntegerField('Days Left', validators=[DataRequired()])
+    submit = SubmitField('Submit Request')
 
 @main.route('/')
 def index():
@@ -60,11 +69,32 @@ def logout():
 @main.route('/discovery')
 @login_required
 def discovery():
-    print(f"Current user role: {current_user.role}")  # Debug print to console
+    print(f"Current user role: {current_user.role}")
     return render_template('discovery.html', current_user=current_user)
 
-@main.route('/post')
+@main.route('/post', methods=['GET', 'POST'])
 @login_required
 def post():
-    # Stub for now, will implement later
-    return render_template('post.html', current_user=current_user)
+    form = PostForm()
+    if current_user.role not in ['organization', 'individual', 'admin']:
+        flash('You do not have permission to create a post.', 'danger')
+        return redirect(url_for('main.discovery'))
+    if form.validate_on_submit():
+        image_binary = None
+        if form.image.data:
+            image_file = form.image.data
+            image_binary = image_file.read()  # Convert to binary
+        post = Post(
+            user_id=current_user.id,
+            title=form.title.data,
+            description=form.description.data,
+            image_binary=image_binary,
+            priority=form.priority.data,
+            days_left=form.days_left.data,
+            status='pending'
+        )
+        db.session.add(post)
+        db.session.commit()
+        flash('Post submitted for approval!', 'success')
+        return redirect(url_for('main.discovery'))
+    return render_template('post.html', form=form, current_user=current_user)

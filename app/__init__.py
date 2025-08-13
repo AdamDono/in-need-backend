@@ -20,8 +20,8 @@ def create_app():
 
     with app.app_context():
         from .models import User, Post  # Import models here
-        # Optional, use migrations instead
-        pass  # Remove db.create_all() to rely on migrations
+        # Rely on migrations instead of db.create_all()
+        pass
 
     from .routes import main
     app.register_blueprint(main)
