@@ -66,11 +66,14 @@ def logout():
     logout_user()
     return redirect(url_for('main.index'))
 
+
+
 @main.route('/discovery')
 @login_required
 def discovery():
     print(f"Current user role: {current_user.role}")
-    return render_template('discovery.html', current_user=current_user)
+    posts = Post.query.filter_by(status='approved').all()  # Show only approved posts
+    return render_template('discovery.html', posts=posts, current_user=current_user)
 
 @main.route('/post', methods=['GET', 'POST'])
 @login_required
