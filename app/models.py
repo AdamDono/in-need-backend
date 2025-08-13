@@ -19,7 +19,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    image_binary = db.Column(db.LargeBinary, nullable=True)  # Store image as binary
+    image_binary = db.Column(db.LargeBinary, nullable=True)
     priority = db.Column(db.String(20), nullable=False)
     days_left = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(20), nullable=False, default='pending')

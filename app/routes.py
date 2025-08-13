@@ -15,7 +15,7 @@ class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('sponsor', 'Sponsor'), ('organization', 'Organization'), ('individual', 'Individual')], validators=[DataRequired()])
+    role = SelectField('Role', choices=[('sponsor', 'Sponsor'), ('organization', 'Organization'), ('individual', 'Individual'), ('admin', 'Admin')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
 class LoginForm(FlaskForm):
@@ -76,7 +76,7 @@ def discovery():
 @login_required
 def post():
     form = PostForm()
-    if current_user.role not in ['organization', 'individual']:
+    if current_user.role not in ['organization', 'individual', 'admin']:
         flash('You do not have permission to create a post.', 'danger')
         return redirect(url_for('main.discovery'))
     if form.validate_on_submit():
