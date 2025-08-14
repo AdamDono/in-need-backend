@@ -10,8 +10,11 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), nullable=False)
     name = db.Column(db.String(100), nullable=False)
+    bio = db.Column(db.Text, nullable=True)
+    profile_image = db.Column(db.LargeBinary, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    verification_status = db.Column(db.String(20), nullable=True)
+    verification_status = db.Column(db.String(20), nullable=True, default='pending')
+    verification_documents = db.Column(db.LargeBinary, nullable=True)
 
 class Post(db.Model):
     __tablename__ = 'post'

@@ -2,8 +2,9 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from .config import Config
-from .database import db  # Import db from database.py
+from .database import db
 from werkzeug.security import generate_password_hash
+import base64
 
 migrate = Migrate()
 login_manager = LoginManager()
@@ -19,9 +20,7 @@ def create_app():
     login_manager.login_view = 'main.login'
 
     with app.app_context():
-        from .models import User, Post  # Import models here
-        # Rely on migrations instead of db.create_all()
-        pass
+        from .models import User, Post
 
     from .routes import main
     app.register_blueprint(main)
@@ -37,5 +36,15 @@ def create_app():
         db.session.add(admin)
         db.session.commit()
         print('Admin user created successfully.')
+
+    @app.template_filter('to_base64')
+    def to_base64(binary):
+        if binary:
+            return base64.b64encode(binary).decode('utf-8')
+        return ''
+
+    @app.template_filter('multiply')
+    def multiply(value, factor):
+        return value * factor
 
     return app
